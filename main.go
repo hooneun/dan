@@ -1,0 +1,83 @@
+package main
+
+import (
+	"context"
+	"errors"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+)
+
+func Logger() MiddlewareFunc {
+	return func(next HandlerFunc) HandlerFunc {
+		return func(c *Context) error {
+			start := time.Now()
+
+			err := next(c)
+
+			log.Printf("[LOG] %s %s | %v | Error: %v", c.R.Method, c.R.URL.Path, time.Since(start), err)
+
+			return err
+		}
+	}
+}
+
+func main() {
+	app := NewEngine()
+
+	app.Use(Logger())
+
+	app.GET("/health", func(c *Context) error {
+		return c.JSON(http.StatusOK, map[string]string{"status": "UP"})
+	})
+
+	v1 := app.Group("/api/v1")
+	{
+		v1.GET("/users", func(c *Context) error {
+			return c.JSON(http.StatusOK, map[string]string{"users": "test"})
+		})
+	}
+
+	srv := &http.Server{
+		Addr:         ":8080",
+		Handler:      app,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  120 * time.Second,
+	}
+
+	serverErrors := make(chan error, 1)
+	go func() {
+		log.Println("[START] Framework Server is running on :8080...")
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			serverErrors <- err
+		}
+	}()
+
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
+
+	select {
+	case err := <-serverErrors:
+		log.Fatalf("[FATAL] Error starting server: %v", err)
+
+	case sig := <-shutdown:
+		log.Printf("[SHUTDOWN] Signal %v received. Initiating graceful shutdown...", sig)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if err := srv.Shutdown(ctx); err != nil {
+			log.Printf("[ERROR] Graceful shutdown failed: %v", err)
+
+			if err := srv.Close(); err != nil {
+				log.Fatalf("[FATAL] Force close failed: %v", err)
+			}
+		}
+	}
+
+	log.Println("[STOP] Server cleanly stopped")
+}

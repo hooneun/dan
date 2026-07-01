@@ -39,13 +39,7 @@ func (g *RouterGroup) Handle(method, path string, handler HandlerFunc) {
 		finalHandler = g.middlewares[i](finalHandler)
 	}
 
-	g.engine.mux.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
-		ctx := &Context{W: w, R: r}
-		if err := finalHandler(ctx); err != nil {
-			log.Printf("[ERROR] %s %s -> %v", r.Method, r.URL.Path, err)
-			ctx.Error(http.StatusInternalServerError, "Internal Server Error")
-		}
-	})
+	g.engine.handlers[pattern] = finalHandler
 }
 
 func (g *RouterGroup) GET(path string, h HandlerFunc)  { g.Handle(http.MethodGet, path, h) }
@@ -53,12 +47,11 @@ func (g *RouterGroup) POST(path string, h HandlerFunc) { g.Handle(http.MethodPos
 
 type Engine struct {
 	*RouterGroup
-	mux *http.ServeMux
+	handlers map[string]HandlerFunc
 }
 
 func NewEngine() *Engine {
-	mux := http.NewServeMux()
-	engine := &Engine{mux: mux}
+	engine := &Engine{handlers: make(map[string]HandlerFunc)}
 
 	engine.RouterGroup = &RouterGroup{
 		prefix:      "",
@@ -72,5 +65,15 @@ func NewEngine() *Engine {
 }
 
 func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	e.mux.ServeHTTP(w, r)
+	pattern := r.Method + " " + r.URL.Path
+	if handler, ok := e.handlers[pattern]; ok {
+		ctx := &Context{W: w, R: r}
+		if err := handler(ctx); err != nil {
+			log.Printf("[ERROR] %s %s -> %v", r.Method, r.URL.Path, err)
+			ctx.Error(http.StatusInternalServerError, "Internal Server Error")
+		}
+		return
+	}
+
+	http.NotFound(w, r)
 }

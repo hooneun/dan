@@ -59,11 +59,15 @@ type Engine struct {
 func NewEngine() *Engine {
 	mux := http.NewServeMux()
 	engine := &Engine{mux: mux}
+
 	engine.RouterGroup = &RouterGroup{
 		prefix:      "",
 		middlewares: []MiddlewareFunc{},
 		engine:      engine,
 	}
+
+	engine.middlewares = append(engine.middlewares, Logger())
+
 	return engine
 }
 

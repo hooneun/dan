@@ -28,6 +28,36 @@ func (c *Context) Param(key string) string {
 	return c.R.PathValue(key)
 }
 
+func (c *Context) Query(key string) string {
+	return c.R.URL.Query().Get(key)
+}
+
+func (c *Context) DefaultQuery(key, defaultValue string) string {
+	value := c.Query(key)
+	if value == "" {
+		return defaultValue
+	}
+
+	return value
+}
+
+func (c *Context) Form(key string) string {
+	if err := c.R.ParseForm(); err != nil {
+		return ""
+	}
+
+	return c.R.FormValue(key)
+}
+
+func (c *Context) DefaultForm(key, defaultValue string) string {
+	value := c.Form(key)
+	if value == "" {
+		return defaultValue
+	}
+
+	return value
+}
+
 func (c *Context) BindJSON(v any) error {
 	defer c.R.Body.Close()
 	return json.NewDecoder(c.R.Body).Decode(v)

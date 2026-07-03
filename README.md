@@ -11,14 +11,14 @@
 - 쿼리 파라미터 및 폼 파라미터 헬퍼 제공
 - 미들웨어 체인 지원
 - JSON 응답 및 에러 핸들링 편의 메서드
-- 기본 로깅 미들웨어 제공
+- 기본 로깅 및 Panic Recovery 미들웨어 제공
 
 ## 추가 예정 기능
 
 - [x] 동적 라우트 지원 (`/users/:id`)
 - [x] 더 많은 HTTP 메서드 지원 (`PUT`, `PATCH`, `DELETE`, `OPTIONS`)
 - [x] 쿼리 파라미터 및 폼 파라미터 헬퍼 추가
-- [ ] Panic Recovery 미들웨어 추가
+- [x] Panic Recovery 미들웨어 추가
 
 ## 설치
 
@@ -45,6 +45,9 @@ func main() {
 
     // 기본 로거 미들웨어 등록
     app.Use(Logger())
+
+    // Panic Recovery 미들웨어 등록
+    app.Use(Recovery())
 
     // 단일 엔드포인트 등록
     app.GET("/health", func(c *Context) error {
@@ -108,7 +111,10 @@ func main() {
 
 ```go
 app.Use(Logger())
+app.Use(Recovery())
 ```
+
+`Recovery()`는 핸들러에서 발생한 panic을 복구하고 `500 Internal Server Error` JSON 응답을 반환합니다.
 
 미들웨어는 `HandlerFunc`을 받아 `HandlerFunc`을 반환하는 함수 형태입니다.
 

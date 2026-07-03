@@ -6,13 +6,14 @@
 
 - `Engine` 기반 단순 HTTP 라우팅
 - `RouterGroup`을 이용한 경로 접두사 및 그룹 라우팅
+- 동적 라우트 지원 (`/users/:id`)
 - 미들웨어 체인 지원
 - JSON 응답 및 에러 핸들링 편의 메서드
 - 기본 로깅 미들웨어 제공
 
 ## 추가 예정 기능
 
-- [ ] 동적 라우트 지원 (`/users/:id`)
+- [x] 동적 라우트 지원 (`/users/:id`)
 - [ ] 더 많은 HTTP 메서드 지원 (`PUT`, `PATCH`, `DELETE`, `OPTIONS`)
 - [ ] 쿼리 파라미터 및 폼 파라미터 헬퍼 추가
 - [ ] Panic Recovery 미들웨어 추가
@@ -46,6 +47,11 @@ func main() {
     // 단일 엔드포인트 등록
     app.GET("/health", func(c *Context) error {
         return c.JSON(http.StatusOK, map[string]string{"status": "UP"})
+    })
+
+    // 동적 라우트 등록
+    app.GET("/users/:id", func(c *Context) error {
+        return c.JSON(http.StatusOK, map[string]string{"id": c.Param("id")})
     })
 
     // 그룹 라우팅 사용
@@ -117,6 +123,15 @@ app.Use(Logger())
 
 ```go
 return c.JSON(http.StatusOK, map[string]string{"message": "hello"})
+```
+
+동적 라우트 파라미터는 `Param`으로 가져올 수 있습니다.
+
+```go
+app.GET("/users/:id", func(c *Context) error {
+    id := c.Param("id")
+    return c.JSON(http.StatusOK, map[string]string{"id": id})
+})
 ```
 
 ## 예제

@@ -31,6 +31,7 @@ func (g *RouterGroup) Use(mw ...MiddlewareFunc) {
 	g.middlewares = append(g.middlewares, mw...)
 }
 
+// Handle registers a route handler. Register routes before serving requests.
 func (g *RouterGroup) Handle(method, path string, handler HandlerFunc) {
 	fullPath := g.prefix + path
 	pattern := method + " " + fullPath
@@ -64,7 +65,7 @@ func NewEngine() *Engine {
 		engine:      engine,
 	}
 
-	engine.middlewares = append(engine.middlewares, Logger())
+	engine.middlewares = append(engine.middlewares, Logger(), Recovery())
 
 	return engine
 }
@@ -85,10 +86,13 @@ func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (e *Engine) handle(w http.ResponseWriter, r *http.Request, handler HandlerFunc) {
-	ctx := &Context{W: w, R: r}
+	rw := newResponseWriter(w)
+	ctx := &Context{W: rw, R: r}
 	if err := handler(ctx); err != nil {
-		log.Printf("[ERROR] %s %s -> %v", r.Method, r.URL.Path, err)
-		ctx.Error(http.StatusInternalServerError, "Internal Server Error")
+		log.Printf("[ERROR] %s %s -> %s", r.Method, sanitizeLogValue(r.URL.Path), sanitizeLogValue(err))
+		if !ctx.Written() {
+			ctx.Error(http.StatusInternalServerError, "Internal Server Error")
+		}
 	}
 }
 

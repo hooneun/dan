@@ -8,6 +8,7 @@
 - `RouterGroup`을 이용한 경로 접두사 및 그룹 라우팅
 - 동적 라우트 지원 (`/users/:id`)
 - HTTP 메서드 라우팅 지원 (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS`)
+- 쿼리 파라미터 및 폼 파라미터 헬퍼 제공
 - 미들웨어 체인 지원
 - JSON 응답 및 에러 핸들링 편의 메서드
 - 기본 로깅 미들웨어 제공
@@ -16,7 +17,7 @@
 
 - [x] 동적 라우트 지원 (`/users/:id`)
 - [x] 더 많은 HTTP 메서드 지원 (`PUT`, `PATCH`, `DELETE`, `OPTIONS`)
-- [ ] 쿼리 파라미터 및 폼 파라미터 헬퍼 추가
+- [x] 쿼리 파라미터 및 폼 파라미터 헬퍼 추가
 - [ ] Panic Recovery 미들웨어 추가
 
 ## 설치
@@ -53,23 +54,6 @@ func main() {
     // 동적 라우트 등록
     app.GET("/users/:id", func(c *Context) error {
         return c.JSON(http.StatusOK, map[string]string{"id": c.Param("id")})
-    })
-
-    // HTTP 메서드별 라우트 등록
-    app.PUT("/users/:id", func(c *Context) error {
-        return c.JSON(http.StatusOK, map[string]string{"method": "PUT", "id": c.Param("id")})
-    })
-
-    app.PATCH("/users/:id", func(c *Context) error {
-        return c.JSON(http.StatusOK, map[string]string{"method": "PATCH", "id": c.Param("id")})
-    })
-
-    app.DELETE("/users/:id", func(c *Context) error {
-        return c.JSON(http.StatusOK, map[string]string{"method": "DELETE", "id": c.Param("id")})
-    })
-
-    app.OPTIONS("/users", func(c *Context) error {
-        return c.JSON(http.StatusOK, map[string]string{"allow": "GET,POST,PUT,PATCH,DELETE,OPTIONS"})
     })
 
     // 그룹 라우팅 사용
@@ -136,6 +120,10 @@ app.Use(Logger())
 - `Error(statusCode int, message string) error`
 - `BindJSON(v any) error`
 - `Param(key string) string`
+- `Query(key string) string`
+- `DefaultQuery(key, defaultValue string) string`
+- `Form(key string) string`
+- `DefaultForm(key, defaultValue string) string`
 
 예시:
 
@@ -149,6 +137,26 @@ return c.JSON(http.StatusOK, map[string]string{"message": "hello"})
 app.GET("/users/:id", func(c *Context) error {
     id := c.Param("id")
     return c.JSON(http.StatusOK, map[string]string{"id": id})
+})
+```
+
+쿼리 파라미터는 `Query` 또는 `DefaultQuery`로 가져올 수 있습니다.
+
+```go
+app.GET("/search", func(c *Context) error {
+    q := c.Query("q")
+    page := c.DefaultQuery("page", "1")
+    return c.JSON(http.StatusOK, map[string]string{"q": q, "page": page})
+})
+```
+
+폼 파라미터는 `Form` 또는 `DefaultForm`으로 가져올 수 있습니다.
+
+```go
+app.POST("/profile", func(c *Context) error {
+    name := c.Form("name")
+    role := c.DefaultForm("role", "guest")
+    return c.JSON(http.StatusOK, map[string]string{"name": name, "role": role})
 })
 ```
 

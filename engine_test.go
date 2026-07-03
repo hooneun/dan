@@ -98,14 +98,13 @@ func TestDynamicRouteNotFoundWhenSegmentCountDiffers(t *testing.T) {
 
 func TestMoreHTTPMethods(t *testing.T) {
 	tests := []struct {
-		name     string
-		method   string
-		register func(path string, h HandlerFunc)
+		name   string
+		method string
 	}{
-		{name: "PUT", method: http.MethodPut, register: NewEngine().PUT},
-		{name: "PATCH", method: http.MethodPatch, register: NewEngine().PATCH},
-		{name: "DELETE", method: http.MethodDelete, register: NewEngine().DELETE},
-		{name: "OPTIONS", method: http.MethodOptions, register: NewEngine().OPTIONS},
+		{name: "PUT", method: http.MethodPut},
+		{name: "PATCH", method: http.MethodPatch},
+		{name: "DELETE", method: http.MethodDelete},
+		{name: "OPTIONS", method: http.MethodOptions},
 	}
 
 	for _, tt := range tests {

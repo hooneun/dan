@@ -43,8 +43,12 @@ func (g *RouterGroup) Handle(method, path string, handler HandlerFunc) {
 	g.engine.handlers[pattern] = finalHandler
 }
 
-func (g *RouterGroup) GET(path string, h HandlerFunc)  { g.Handle(http.MethodGet, path, h) }
-func (g *RouterGroup) POST(path string, h HandlerFunc) { g.Handle(http.MethodPost, path, h) }
+func (g *RouterGroup) GET(path string, h HandlerFunc)     { g.Handle(http.MethodGet, path, h) }
+func (g *RouterGroup) POST(path string, h HandlerFunc)    { g.Handle(http.MethodPost, path, h) }
+func (g *RouterGroup) PUT(path string, h HandlerFunc)     { g.Handle(http.MethodPut, path, h) }
+func (g *RouterGroup) PATCH(path string, h HandlerFunc)   { g.Handle(http.MethodPatch, path, h) }
+func (g *RouterGroup) DELETE(path string, h HandlerFunc)  { g.Handle(http.MethodDelete, path, h) }
+func (g *RouterGroup) OPTIONS(path string, h HandlerFunc) { g.Handle(http.MethodOptions, path, h) }
 
 type Engine struct {
 	*RouterGroup

@@ -76,7 +76,7 @@ func TestBodyLimit(t *testing.T) {
 
 func TestSanitizeLogValue(t *testing.T) {
 	got := sanitizeLogValue("/users\nforged\rline\ttab")
-	want := `/users\nforged\rline\ttab`
+	want := "/users\\nforged\\rline\\ttab"
 
 	if got != want {
 		t.Fatalf("expected sanitized value %q, got %q", want, got)

@@ -7,6 +7,7 @@
 - `Engine` 기반 단순 HTTP 라우팅
 - `RouterGroup`을 이용한 경로 접두사 및 그룹 라우팅
 - 동적 라우트 지원 (`/users/:id`)
+- HTTP 메서드 라우팅 지원 (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS`)
 - 미들웨어 체인 지원
 - JSON 응답 및 에러 핸들링 편의 메서드
 - 기본 로깅 미들웨어 제공
@@ -14,7 +15,7 @@
 ## 추가 예정 기능
 
 - [x] 동적 라우트 지원 (`/users/:id`)
-- [ ] 더 많은 HTTP 메서드 지원 (`PUT`, `PATCH`, `DELETE`, `OPTIONS`)
+- [x] 더 많은 HTTP 메서드 지원 (`PUT`, `PATCH`, `DELETE`, `OPTIONS`)
 - [ ] 쿼리 파라미터 및 폼 파라미터 헬퍼 추가
 - [ ] Panic Recovery 미들웨어 추가
 
@@ -52,6 +53,23 @@ func main() {
     // 동적 라우트 등록
     app.GET("/users/:id", func(c *Context) error {
         return c.JSON(http.StatusOK, map[string]string{"id": c.Param("id")})
+    })
+
+    // HTTP 메서드별 라우트 등록
+    app.PUT("/users/:id", func(c *Context) error {
+        return c.JSON(http.StatusOK, map[string]string{"method": "PUT", "id": c.Param("id")})
+    })
+
+    app.PATCH("/users/:id", func(c *Context) error {
+        return c.JSON(http.StatusOK, map[string]string{"method": "PATCH", "id": c.Param("id")})
+    })
+
+    app.DELETE("/users/:id", func(c *Context) error {
+        return c.JSON(http.StatusOK, map[string]string{"method": "DELETE", "id": c.Param("id")})
+    })
+
+    app.OPTIONS("/users", func(c *Context) error {
+        return c.JSON(http.StatusOK, map[string]string{"allow": "GET,POST,PUT,PATCH,DELETE,OPTIONS"})
     })
 
     // 그룹 라우팅 사용
@@ -131,6 +149,25 @@ return c.JSON(http.StatusOK, map[string]string{"message": "hello"})
 app.GET("/users/:id", func(c *Context) error {
     id := c.Param("id")
     return c.JSON(http.StatusOK, map[string]string{"id": id})
+})
+```
+
+## HTTP 메서드
+
+다음 HTTP 메서드 라우팅을 지원합니다.
+
+- `GET(path string, h HandlerFunc)`
+- `POST(path string, h HandlerFunc)`
+- `PUT(path string, h HandlerFunc)`
+- `PATCH(path string, h HandlerFunc)`
+- `DELETE(path string, h HandlerFunc)`
+- `OPTIONS(path string, h HandlerFunc)`
+
+예시:
+
+```go
+app.PUT("/users/:id", func(c *Context) error {
+    return c.JSON(http.StatusOK, map[string]string{"id": c.Param("id")})
 })
 ```
 

@@ -11,6 +11,10 @@ type Context struct {
 }
 
 func (c *Context) JSON(statusCode int, data any) error {
+	if c.Written() {
+		return nil
+	}
+
 	c.W.Header().Set("Content-Type", "application/json")
 	c.W.WriteHeader(statusCode)
 	if data != nil {
@@ -61,4 +65,9 @@ func (c *Context) DefaultForm(key, defaultValue string) string {
 func (c *Context) BindJSON(v any) error {
 	defer c.R.Body.Close()
 	return json.NewDecoder(c.R.Body).Decode(v)
+}
+
+func (c *Context) Written() bool {
+	writer, ok := c.W.(interface{ Written() bool })
+	return ok && writer.Written()
 }

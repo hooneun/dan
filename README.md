@@ -12,6 +12,7 @@
 - 미들웨어 체인 지원
 - JSON 응답 및 에러 핸들링 편의 메서드
 - 기본 로깅 및 Panic Recovery 미들웨어 제공
+- 요청 본문 크기 제한을 위한 `BodyLimit` 미들웨어 제공
 
 ## 추가 예정 기능
 
@@ -43,11 +44,9 @@ import (
 func main() {
     app := NewEngine()
 
-    // 기본 로거 미들웨어 등록
-    app.Use(Logger())
-
-    // Panic Recovery 미들웨어 등록
-    app.Use(Recovery())
+    // NewEngine은 기본으로 Logger와 Recovery 미들웨어를 등록합니다.
+    // 필요한 경우 요청 본문 크기 제한을 추가할 수 있습니다.
+    app.Use(BodyLimit(1 << 20)) // 1MB
 
     // 단일 엔드포인트 등록
     app.GET("/health", func(c *Context) error {
@@ -65,6 +64,7 @@ func main() {
         return c.JSON(http.StatusOK, map[string]string{"users": "test"})
     })
 
+    // 모든 라우트와 미들웨어는 서버 시작 전에 등록하는 것을 권장합니다.
     srv := &http.Server{
         Addr:         ":8080",
         Handler:      app,
@@ -107,14 +107,15 @@ func main() {
 
 ## 미들웨어
 
-`dan`은 미들웨어 체인을 지원합니다. 기본적으로 `Logger()`가 등록되며, `Use`를 통해 추가 미들웨어를 적용할 수 있습니다.
+`dan`은 미들웨어 체인을 지원합니다. `NewEngine()`은 기본적으로 `Logger()`와 `Recovery()`를 등록합니다. `Use`를 통해 추가 미들웨어를 적용할 수 있습니다.
 
 ```go
-app.Use(Logger())
-app.Use(Recovery())
+app.Use(BodyLimit(1 << 20)) // 1MB
 ```
 
 `Recovery()`는 핸들러에서 발생한 panic을 복구하고 `500 Internal Server Error` JSON 응답을 반환합니다.
+
+`BodyLimit(maxBytes int64)`는 요청 본문 크기를 제한합니다. 큰 요청 본문을 다루는 엔드포인트에는 명시적인 제한을 두는 것을 권장합니다.
 
 미들웨어는 `HandlerFunc`을 받아 `HandlerFunc`을 반환하는 함수 형태입니다.
 
@@ -130,6 +131,7 @@ app.Use(Recovery())
 - `DefaultQuery(key, defaultValue string) string`
 - `Form(key string) string`
 - `DefaultForm(key, defaultValue string) string`
+- `Written() bool`
 
 예시:
 
@@ -184,6 +186,13 @@ app.PUT("/users/:id", func(c *Context) error {
     return c.JSON(http.StatusOK, map[string]string{"id": c.Param("id")})
 })
 ```
+
+## 보안 참고사항
+
+- 라우트와 미들웨어는 서버가 요청을 처리하기 전에 등록하는 것을 권장합니다.
+- 로그 출력 시 요청 path, error, panic 값의 줄바꿈 문자를 이스케이프합니다.
+- 핸들러가 이미 응답을 작성한 뒤 error를 반환하면 추가 error 응답을 쓰지 않습니다.
+- 큰 요청 본문을 받을 수 있는 엔드포인트에는 `BodyLimit`을 적용하는 것을 권장합니다.
 
 ## 예제
 
